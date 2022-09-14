@@ -86,3 +86,4 @@ config.mak
 utils/producer
 .cache.mk
 utils/sync_kloop_test
+.idea/

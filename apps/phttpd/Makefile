@@ -2,6 +2,7 @@
 CFLAGS += -Werror -Wall -O2 -g
 NMLIB = ../../libnetmap/libnetmap.a
 LSMLIB = ../../../lsm_nvm
+SILOLIB = ../../silo
 NOCFLAGS := $(CFLAGS)
 NOCFLAGS += -DNOLIBNETMAP -DLIBNETMAP_NOTHREADSAFE
 
@@ -24,6 +25,8 @@ OOPT = -DWITH_CLFLUSHOPT -mclflushopt
 
 LOPT = -DWITH_LEVELDB -I$(LSMLIB)/include
 LLDOPT = $(LSMLIB)/out-static/libleveldb.a -lnuma
+SILOOPT = -DWITH_SILO -I$(SILOLIB)/include
+LSILOOPT = $(SILOLIB)/out-static/libsilo.a
 
 #
 # compile phttpd-o only if your CPU supports clflushopt
@@ -66,5 +69,10 @@ phttpd-l: phttpd-l.o
 	$(CC) $(CFLAGS) -o phttpd-l phttpd-l.o $(LDFLAGS) $(EXTRA_CFLAGS) $(LLDOPT)
 phttpd-l.o: phttpd.c nmlib.h
 	$(CC) $(CFLAGS) $(OPT) $(SOPT) $(LOPT) $(SPATH) -c phttpd.c -o phttpd-l.o $(EXTRA_CFLAGS)
+phttpd-s: phttpd-s.o
+	$(CC) $(CFLAGS) -o phttpd-l phttpd-l.o $(LDFLAGS) $(EXTRA_CFLAGS) $(LSILOOPT)
+phttpd-s.o: phttpd.c nmlib.h
+	$(CC) $(CFLAGS) $(OPT) $(SOPT) $(SILOOPT) $(SPATH) -c phttpd.c -o phttpd-l.o $(EXTRA_CFLAGS)
+
 clean:
 	-@rm -f $(ALLPROG) $(OBJS)
