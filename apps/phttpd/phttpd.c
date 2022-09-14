@@ -693,6 +693,7 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size)
 #ifdef WITH_SILO
 	// Silo currently not support init params.
 	silo_init();
+	db->silo = true;
 #endif
 #ifdef WITH_BPLUS
 	/* need B+tree ? */
