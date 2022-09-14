@@ -54,6 +54,7 @@
 #include <leveldb/slice.h>
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
+#include <silo/tx.h>
 #include <silo/init.h>
 #endif /* WITH_SILO */
 
@@ -113,6 +114,10 @@ struct dbctx {
 #ifdef WITH_LEVELDB
 	leveldb::DB *leveldb;
 #endif /* WITH_LEVELDB */
+#ifdef WITH_SILO
+	// SILO currently only supports single instance.
+	bool silo;
+#endif /* WITH_SILO */
 	size_t cur;
 };
 
@@ -481,6 +486,19 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				D("leveldb write error");
 			}
 #endif /* WITH_LEVELDB */
+#ifdef WITL_SILO
+		} else if(db->silo) {
+			sturct tx t;
+			tx_init(&t);
+			struct value v;
+			v.body = &req;
+			v.len = thisclen;
+			tx_write(&t, key, v);
+			enum result r = tx_commit(&t);
+			if(r != commited){
+				D("Silo write error");
+			}
+#endif
 		} else if (db->paddr) {
 			copy_and_log(db->paddr, &db->cur, dbsiz, datap,
 			    thisclen, db->pgsiz, is_pm(db), db->vp, key);
@@ -671,6 +689,10 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size)
 		}
 		D("leveldb test done (error reported if any)");
 	}
+#endif
+#ifdef WITH_SILO
+	// Silo currently not support init params.
+	silo_init();
 #endif
 #ifdef WITH_BPLUS
 	/* need B+tree ? */

@@ -70,9 +70,9 @@ phttpd-l: phttpd-l.o
 phttpd-l.o: phttpd.c nmlib.h
 	$(CC) $(CFLAGS) $(OPT) $(SOPT) $(LOPT) $(SPATH) -c phttpd.c -o phttpd-l.o $(EXTRA_CFLAGS)
 phttpd-s: phttpd-s.o
-	$(CC) $(CFLAGS) -o phttpd-l phttpd-l.o $(LDFLAGS) $(EXTRA_CFLAGS) $(LSILOOPT)
+	$(CC) $(CFLAGS) -o phttpd-s phttpd-s.o $(LDFLAGS) $(EXTRA_CFLAGS) $(LSILOOPT)
 phttpd-s.o: phttpd.c nmlib.h
-	$(CC) $(CFLAGS) $(OPT) $(SOPT) $(SILOOPT) $(SPATH) -c phttpd.c -o phttpd-l.o $(EXTRA_CFLAGS)
+	$(CC) $(CFLAGS) $(OPT) $(SOPT) $(SILOOPT) $(SPATH) -c phttpd.c -o phttpd-s.o $(EXTRA_CFLAGS)
 
 clean:
 	-@rm -f $(ALLPROG) $(OBJS)

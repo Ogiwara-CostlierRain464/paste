@@ -1,15 +1,15 @@
 #include "include/silo/tx.h"
 #include "include/silo/helper/tlpi_hdr.h"
 #include <stdatomic.h>
-#include <memory.h>
+#include <assert.h>
 
 void tx_init(struct tx* t){
 	memset(t, 0, sizeof(struct tx));
 }
 
-value tx_read(struct tx* tx,key key){
+const struct value tx_read(struct tx* tx,key key){
 	struct tid_word before, after;
-	value data;
+	struct value data;
 
 	struct tuple *t = &table[key];
 
@@ -18,11 +18,12 @@ value tx_read(struct tx* tx,key key){
 			before.body = atomic_load(&t->tid_word.body);
 		} while(before.lock);
 
-		data = t->value;
+		data.body = t->body;
+		data.len = t->body_len;
 
 		after.body = atomic_load(&t->tid_word.body);
 
-		if(tid_word_eq(before, after)){
+		if(before.body ==  after.body){
 			break;
 		}else{
 			continue;
@@ -30,15 +31,15 @@ value tx_read(struct tx* tx,key key){
 	}
 	tx->reads[tx->num_read] = (struct read_operation){
 	    .key = key,
-	    .value = data,
 	    .tid_word = after
 	};
 	tx->num_read++;
 	return data;
 }
 
-void tx_write(struct tx* tx, key key, value val){
+void tx_write(struct tx* tx, key key, struct value val){
 	// assert not to re-write.
+	assert(val.len <= BODY_SIZE);
 
 	struct tuple *t = &table[key];
 	tx->writes[tx->num_write] = (struct write_operation){
@@ -105,7 +106,8 @@ enum result tx_commit(struct tx* tx){
 	tx->most_recently_chosen_tid = max;
 
 	for(size_t i = 0; i < tx->num_write; i++){
-		atomic_store(&tx->writes[i].ptr->value, tx->writes[i].value);
+		memcpy(tx->writes[i].ptr->body, tx->writes[i].value.body, tx->writes[i].value.len);
+		tx->writes[i].ptr->body_len = tx->writes[i].value.len;
 		atomic_store(&tx->writes[i].ptr->tid_word.body, max.body);
 	}
 

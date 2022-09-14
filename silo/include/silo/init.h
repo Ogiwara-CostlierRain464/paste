@@ -2,6 +2,7 @@
 #define PASTE_INIT_H
 
 #include "tuple.h"
+#include <string.h>
 
 void silo_init(){
 	epoch = 1;
@@ -13,7 +14,8 @@ void silo_init(){
 		t->tid_word.epoch = 1;
 		t->tid_word.latest = true;
 		t->tid_word.lock = false;
-		t->value = 0;
+		memset(t->body, 0, sizeof(t->body));
+		t->body_len = 0;
 	}
 }
 

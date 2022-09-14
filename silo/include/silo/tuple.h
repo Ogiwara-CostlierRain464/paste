@@ -7,8 +7,12 @@
 #include <stdalign.h>
 #include <stdatomic.h>
 
-typedef int key;
-typedef int value;
+struct value{
+	char *body;
+	size_t len; // <= BODY_SIZE
+};
+
+typedef uint64_t key;
 
 struct tid_word{
 	union {
@@ -26,10 +30,12 @@ struct tid_word{
 #define CACHE_LINE_SIZE 64
 #define TUPLE_NUM 10000
 #define THREAD_NUM 4
+#define BODY_SIZE 1024
 
 struct tuple{
 	alignas(CACHE_LINE_SIZE) struct tid_word tid_word;
-	value value;
+	char body[BODY_SIZE];
+	size_t body_len; // <= BODY_SIZE
 };
 
 typedef uint32_t epoch_t;
