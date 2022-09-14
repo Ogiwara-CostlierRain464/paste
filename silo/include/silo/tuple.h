@@ -23,10 +23,6 @@ struct tid_word{
 	};
 };
 
-static bool tid_word_eq(struct tid_word t1, struct tid_word t2){
-	return t1.body == t2.body;
-}
-
 #define CACHE_LINE_SIZE 64
 #define TUPLE_NUM 10000
 #define THREAD_NUM 4

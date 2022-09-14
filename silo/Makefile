@@ -1,4 +1,4 @@
-SRCS = silo.c
+SRCS = tuple.c tx.c
 OBJS = ${SRCS:.c=.o}
 
 libsilo.a: $(OBJS)

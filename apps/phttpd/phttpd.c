@@ -54,7 +54,7 @@
 #include <leveldb/slice.h>
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
-#include <silo/silo.h>
+#include <silo/init.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
