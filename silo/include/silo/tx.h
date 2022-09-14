@@ -5,13 +5,12 @@
 
 struct read_operation{
 	key key;
-	value value;
 	struct tid_word tid_word;
 };
 
 struct write_operation{
 	key key;
-	value value;
+	struct value value;
 	struct tuple *ptr;
 };
 
@@ -32,8 +31,8 @@ enum result{
 };
 
 void tx_init(struct tx*);
-value tx_read(struct tx*, key);
-void tx_write(struct tx*, key, value);
+const struct value tx_read(struct tx*, key);
+void tx_write(struct tx*, key, struct value);
 enum result tx_commit(struct tx*);
 
 #endif // PASTE_TX_H
