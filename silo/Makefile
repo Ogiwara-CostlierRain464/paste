@@ -1,4 +1,9 @@
-libsilo.a: silo.o
-	ar rcs $@ $^
-silo.o: silo.h
-	gcc -c -o $@ $<
+SRCS = silo.c
+OBJS = ${SRCS:.c=.o}
+
+libsilo.a: $(OBJS)
+	ar rv $@ $?
+	ranlib $@
+
+clean:
+	rm *.o *.a

@@ -26,7 +26,7 @@ OOPT = -DWITH_CLFLUSHOPT -mclflushopt
 LOPT = -DWITH_LEVELDB -I$(LSMLIB)/include
 LLDOPT = $(LSMLIB)/out-static/libleveldb.a -lnuma
 SILOOPT = -DWITH_SILO -I$(SILOLIB)/include
-LSILOOPT = $(SILOLIB)/out-static/libsilo.a
+LSILOOPT = $(SILOLIB)/libsilo.a
 
 #
 # compile phttpd-o only if your CPU supports clflushopt
