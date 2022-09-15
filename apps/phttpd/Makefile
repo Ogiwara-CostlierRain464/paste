@@ -17,7 +17,7 @@ endif
 NOLDFLAGS := $(LDFLAGS)
 LDFLAGS += $(NMLIB)
 #CFLAGS += -I/usr/local/include -I../libsqlite/include
-OBJS = phttpd-b.o phttpd-f.o bplus_support.o bplus_impl.o phttpd-l.o phttpd-o.o
+OBJS = phttpd-b.o phttpd-f.o bplus_support.o bplus_impl.o phttpd-l.o phttpd-o.o phttpd-s.o
 SPATH ?= -I../../sys/ -I../include -I../../libnetmap -DNETMAP_WITH_LIBS
 BOPT = -DWITH_BPLUS -I./
 FOPT = -DWITH_NOFLUSH
@@ -32,7 +32,7 @@ LSILOOPT = $(SILOLIB)/libsilo.a
 # compile phttpd-o only if your CPU supports clflushopt
 #
 PROG = phttpd phttpd-b phttpd-f nophttpd phttpd-o
-ALLPROG = $(PROG) phttpd-l phttpd-o
+ALLPROG = $(PROG) phttpd-l phttpd-o phttpd-s
 
 all: $(PROG)
 

@@ -690,10 +690,12 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size)
 		D("leveldb test done (error reported if any)");
 	}
 #endif
+
 #ifdef WITH_SILO
 	// Silo currently not support init params.
-	silo_init();
+	silo_init(1, 10000);
 	db->silo = true;
+	D("Silo Init done");
 #endif
 #ifdef WITH_BPLUS
 	/* need B+tree ? */

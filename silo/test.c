@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <sys/sysinfo.h>
 #include "include/silo/tx.h"
 #include "include/silo/init.h"
 #include "include/silo/helper/error_functions.h"
@@ -34,17 +35,20 @@ void *worker(void *thread_id){
 }
 
 int main(){
-	silo_init();
+	int thread_num = get_nprocs();
+	printf("Thread num: %d", thread_num);
 
-	pthread_t threads[THREAD_NUM];
-	for(size_t i = 0; i < THREAD_NUM; i++){
+	silo_init(thread_num, 10000);
+
+	pthread_t threads[thread_num];
+	for(size_t i = 0; i < thread_num; i++){
 		if(pthread_create(&threads[i], NULL, worker, (void*)i))
 			errExit("pthread_create");
 	}
 
 	atomic_store(&wait, false);
 
-	for(size_t i = 0; i < THREAD_NUM; i++){
+	for(size_t i = 0; i < thread_num; i++){
 		void *ret_val;
 		pthread_join(threads[i], &ret_val);
 		if(ret_val == PTHREAD_CANCELED){
