@@ -1,7 +1,7 @@
 #ifndef PASTE_TX_H
 #define PASTE_TX_H
 
-#include "tuple.h"
+#include "silo.h"
 
 struct read_operation{
 	key key;
@@ -15,6 +15,7 @@ struct write_operation{
 };
 
 struct tx{
+	struct silo* silo;
 	struct read_operation reads[10];
 	ssize_t num_read;
 	struct write_operation writes[10];
@@ -30,7 +31,7 @@ enum result{
 	commited, aborted
 };
 
-void tx_init(struct tx*);
+void tx_init(struct silo*, struct tx*);
 const struct value tx_read(struct tx*, key);
 void tx_write(struct tx*, key, struct value);
 enum result tx_commit(struct tx*);

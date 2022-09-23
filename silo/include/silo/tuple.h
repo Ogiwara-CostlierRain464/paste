@@ -37,9 +37,6 @@ struct tuple{
 };
 
 typedef uint32_t epoch_t;
-_Atomic extern epoch_t epoch;
-alignas(CACHE_LINE_SIZE) extern uint64_t *thread_local_epochs;
-alignas(CACHE_LINE_SIZE) extern struct tuple *table;
 
 
 #endif // PASTE_TUPLE_H

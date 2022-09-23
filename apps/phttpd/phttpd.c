@@ -55,7 +55,7 @@
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
 #include <silo/tx.h>
-#include <silo/init.h>
+#include <silo/silo.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
@@ -116,7 +116,7 @@ struct dbctx {
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
 	// SILO currently only supports single instance.
-	bool silo;
+	struct silo silo;
 #endif /* WITH_SILO */
 	size_t cur;
 };
@@ -133,6 +133,11 @@ struct phttpd_global {
 		size_t	size;
 		char	*dir; // directory path for data, metadata ane ppool
 	} dba;
+#ifdef WITH_SILO
+	bool is_silo_global;
+	struct silo silo;
+	int silo_tuple_num;
+#endif
 };
 
 static inline int
@@ -219,6 +224,10 @@ usage(void)
 	    "\t[-F] don't clflush on PM (need phttpd-f) \n"
 	    "\t[-e ns] emulate PM access time (need phttpd-o)\n"
 	    "\t[-h] show this help\n"
+#ifdef WITH_SILO
+	    "\t[-S] single Silo DB\n"
+	    "\t[-s tuples] number of tuples in Silo DB\n"
+#endif
 
 	    "\nExamples:\n"
 	    "\t1. No database or PASTE\n\n"
@@ -491,8 +500,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 			sturct tx t;
 			tx_init(&t);
 			struct value v;
-			v.body = &req;
-			v.len = thisclen;
+			v.body = req;
+			v.len = len;
 			tx_write(&t, key, v);
 			enum result r = tx_commit(&t);
 			if(r != commited){
@@ -640,7 +649,7 @@ phttpd_read(struct nm_msg *m)
 }
 
 static int
-init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size)
+init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size, struct phttpd_global *g, struct nm_garg *nmg)
 {
 	int fd = 0;
 	char path[64];
@@ -692,9 +701,9 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size)
 #endif
 
 #ifdef WITH_SILO
-	// Silo currently not support init params.
-	silo_init(1, 10000);
-	db->silo = true;
+	if(!g->is_silo_global){
+		init_silo(&db->silo, nmg->nthreads, g->silo_tuple_num);
+	}
 	D("Silo Init done");
 #endif
 #ifdef WITH_BPLUS
@@ -740,7 +749,7 @@ phttpd_thread(struct nm_targ *targ)
 		(struct phttpd_global *)nmg->garg_private;
 
 	if (init_db((struct dbctx *)targ->opaque, targ->me, g->dba.dir,
-		    g->dba.flags, g->dba.size / nmg->nthreads)) {
+		    g->dba.flags, g->dba.size / nmg->nthreads, g, nmg)) {
 		D("error on init_db");
 		return ENOMEM;
 	}
@@ -830,9 +839,13 @@ main(int argc, char **argv)
 
 	bzero(&pg, sizeof(pg));
 	pg.msglen = 64;
+#ifdef WITH_SILO
+	pg.is_silo_global = false;
+	pg.silo_tuple_num = 10000;
+#endif
 
 	while ((ch = getopt(argc, argv,
-			    "P:l:b:md:Di:cC:a:p:xL:BFe:hN")) != -1) {
+			    "P:l:b:md:Di:cC:a:p:xL:BFe:hNSs:")) != -1) {
 		switch (ch) {
 		default:
 			D("bad option %c %s", ch, optarg);
@@ -901,6 +914,14 @@ main(int argc, char **argv)
 			pg.dba.flags |= DF_LEVELDB;
 			break;
 #endif /* WITH_LEVELDB */
+#ifdef WITH_SILO
+		case 'S':
+			pg.is_silo_global = true;
+			break;
+		case 's':
+			pg.silo_tuple_num = atoi(optarg);
+			break;
+#endif /* WITH_SILO */
 #ifdef WITH_NOFLUSH
 		case 'F': // just to tell the script to use phttpd-f
 			break;
@@ -913,6 +934,12 @@ main(int argc, char **argv)
 		}
 
 	}
+
+#ifdef WITH_SILO
+	if(pg.is_silo_global){
+		init_silo(&pg.silo, nmg.nthreads, pg.silo_tuple_num);
+	}
+#endif
 
 	clean_dir(pg.dba.dir);
 

@@ -3,15 +3,17 @@
 #include <stdatomic.h>
 #include <assert.h>
 
-void tx_init(struct tx* t){
+void tx_init(struct silo* silo, struct tx* t){
 	memset(t, 0, sizeof(struct tx));
+	t->silo = silo;
 }
 
 const struct value tx_read(struct tx* tx,key key){
+	struct silo *s = tx->silo;
 	struct tid_word before, after;
 	struct value data;
 
-	struct tuple *t = &table[key];
+	struct tuple *t = &s->table[key];
 
 	for(;;){
 		do{
@@ -40,8 +42,9 @@ const struct value tx_read(struct tx* tx,key key){
 void tx_write(struct tx* tx, key key, struct value val){
 	// assert not to re-write.
 	assert(val.len <= BODY_SIZE);
+	struct silo *s = tx->silo;
 
-	struct tuple *t = &table[key];
+	struct tuple *t = &s->table[key];
 	tx->writes[tx->num_write] = (struct write_operation){
 	    .key = key,
 	    .value = val,
@@ -64,16 +67,17 @@ int compare_write(const void* a_, const void* b_){
 }
 
 enum result tx_commit(struct tx* tx){
+	struct silo *s = tx->silo;
 	qsort(tx->writes, tx->num_write, sizeof(struct write_operation), compare_write);
 	tx_lock_write_set(tx);
 
 	atomic_thread_fence(memory_order_acquire);
-	_Atomic epoch_t e = atomic_load(&epoch);
+	_Atomic epoch_t e = atomic_load(&s->epoch);
 	atomic_thread_fence(memory_order_release);
 
 	for(size_t i = 0; i < tx->num_read; i++){
 		struct read_operation *op = &tx->reads[i];
-		struct tuple *t = &table[op->key];
+		struct tuple *t = &s->table[op->key];
 
 		struct tid_word when_read = op->tid_word;
 		struct tid_word now;
@@ -116,18 +120,19 @@ enum result tx_commit(struct tx* tx){
 
 void tx_lock_write_set(struct tx* tx){
 	// assume write set has sorted.
+	struct silo *s = tx->silo;
 	struct tid_word expected, desired;
 	for(size_t i = 0; i < tx->num_write; i++){
 		key k = tx->writes[i].key;
-		expected.body = atomic_load(&table[k].tid_word.body);
+		expected.body = atomic_load(&s->table[k].tid_word.body);
 
 		for(;;){
 			if(expected.lock){
-				expected.body = atomic_load(&table[k].tid_word.body);
+				expected.body = atomic_load(&s->table[k].tid_word.body);
 			}else{
 				desired.body = expected.body;
 				desired.lock = true;
-				if(atomic_compare_exchange_weak(&table[k].tid_word.body, &expected.body, desired.body)){
+				if(atomic_compare_exchange_weak(&s->table[k].tid_word.body, &expected.body, desired.body)){
 					break;
 				}
 			}

@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <sys/sysinfo.h>
 #include "include/silo/tx.h"
-#include "include/silo/init.h"
 #include "include/silo/helper/error_functions.h"
 
 atomic_bool wait = true;
+
+struct silo s;
 
 void *worker(void *thread_id){
 	while (wait){;}
@@ -19,7 +20,7 @@ void *worker(void *thread_id){
 	ssize_t num_commited = 0;
 	for(size_t i = 0; i < 20; i++){
 		struct tx t;
-		tx_init(&t);
+		tx_init(&s, &t);
 		struct value v = tx_read(&t, 1); // do not edit this value
 		*buf.body = v.body[0];
 		(*buf.body)++;
@@ -38,7 +39,7 @@ int main(){
 	int thread_num = get_nprocs();
 	printf("Thread num: %d", thread_num);
 
-	silo_init(thread_num, 10000);
+	init_silo(&s, thread_num, 10000);
 
 	pthread_t threads[thread_num];
 	for(size_t i = 0; i < thread_num; i++){
@@ -57,6 +58,6 @@ int main(){
 			printf("Thread %zu return code: %ld\n", i, ((intptr_t)ret_val));
 		}
 	}
-	printf("Final value of key 1: %d\n", table[1].body[0]);
+	printf("Final value of key 1: %d\n", s.table[1].body[0]);
 	pthread_exit(NULL);
 }
