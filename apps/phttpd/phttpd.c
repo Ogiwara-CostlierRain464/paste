@@ -56,6 +56,7 @@
 #ifdef WITH_SILO
 #include <silo/tx.h>
 #include <silo/silo.h>
+#include <silo/xoroshiro_128plus.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
@@ -115,7 +116,6 @@ struct dbctx {
 	leveldb::DB *leveldb;
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
-	// SILO currently only supports single instance.
 	struct silo silo;
 #endif /* WITH_SILO */
 	size_t cur;
@@ -415,7 +415,7 @@ httptype(const char *p)
 
 static int
 phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
-		size_t *msglen, char **content)
+		size_t *msglen, char **content, struct phttpd_global *pg)
 {
 	struct dbctx *db = (struct dbctx *)m->targ->opaque;
 	int *fde = &m->targ->fdtable[m->fd];
@@ -445,6 +445,34 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 		}
 		break;
 	case POST:
+#ifdef WITH_SILO
+		;
+		struct xoroshiro_128plus r = init_xoroshiro_128plus(0);
+		int read_only = next(&r) % 2;
+		struct tx t;
+		if(!pg->is_silo_global){
+			tx_init(&db->silo, &t);
+		}else{
+			tx_init(&pg->silo, &t);
+		}
+
+		key = 9;
+		struct value v;
+		v.body = "char";
+		v.len = 4;
+
+		if(read_only){
+			tx_read(&t, key);
+		}else{
+			tx_write(&t, key, v);
+		}
+
+		enum result r = tx_commit(&t);
+		if(r != commited){
+			D("Silo aborted");
+		}
+		return 0;
+#endif
 		if (parse_post(req, len, &coff, &clen, &thisclen)) {
 			return 0;
 		}
@@ -495,19 +523,6 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				D("leveldb write error");
 			}
 #endif /* WITH_LEVELDB */
-#ifdef WITL_SILO
-		} else if(db->silo) {
-			sturct tx t;
-			tx_init(&t);
-			struct value v;
-			v.body = req;
-			v.len = len;
-			tx_write(&t, key, v);
-			enum result r = tx_commit(&t);
-			if(r != commited){
-				D("Silo write error");
-			}
-#endif
 		} else if (db->paddr) {
 			copy_and_log(db->paddr, &db->cur, dbsiz, datap,
 			    thisclen, db->pgsiz, is_pm(db), db->vp, key);
@@ -575,7 +590,7 @@ phttpd_data(struct nm_msg *m)
 	}
 
 	error = phttpd_req(NETMAP_BUF_OFFSET(m->rxring, m->slot) + doff,
-			len, m, &no_ok, &msglen, &content);
+			len, m, &no_ok, &msglen, &content, pg);
 	if (unlikely(error)) {
 		return error;
 	}
@@ -618,7 +633,7 @@ phttpd_read(struct nm_msg *m)
 		return len == 0 ? 0 : -1;
 	}
 
-	error = phttpd_req(buf, len, m, &no_ok, &msglen, &content);
+	error = phttpd_req(buf, len, m, &no_ok, &msglen, &content, pg);
 	if (unlikely(error))
 		return error;
 	if (!no_ok) {
