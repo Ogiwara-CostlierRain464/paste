@@ -135,6 +135,7 @@ struct phttpd_global {
 	} dba;
 #ifdef WITH_SILO
 	bool is_silo_global;
+	bool is_silo_readonly;
 	struct silo silo;
 	int silo_tuple_num;
 #endif
@@ -227,6 +228,7 @@ usage(void)
 #ifdef WITH_SILO
 	    "\t[-S] single Silo DB\n"
 	    "\t[-s tuples] number of tuples in Silo DB\n"
+	    "\t[-R] Silo read only\n"
 #endif
 
 	    "\nExamples:\n"
@@ -447,8 +449,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 	case POST:
 #ifdef WITH_SILO
 		;
-		struct xoroshiro_128plus r = init_xoroshiro_128plus(0);
-		int read_only = next(&r) % 2;
+		struct xoroshiro_128plus x = init_xoroshiro_128plus(0);
+		int read_only = pg->is_silo_readonly ? 1 : next(&x) % 2;
 		struct tx t;
 		if(!pg->is_silo_global){
 			tx_init(&db->silo, &t);
@@ -857,10 +859,11 @@ main(int argc, char **argv)
 #ifdef WITH_SILO
 	pg.is_silo_global = false;
 	pg.silo_tuple_num = 10000;
+	pg.is_silo_readonly = false;
 #endif
 
 	while ((ch = getopt(argc, argv,
-			    "P:l:b:md:Di:cC:a:p:xL:BFe:hNSs:")) != -1) {
+			    "P:l:b:md:Di:cC:a:p:xL:BFe:hNSs:R")) != -1) {
 		switch (ch) {
 		default:
 			D("bad option %c %s", ch, optarg);
@@ -935,6 +938,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			pg.silo_tuple_num = atoi(optarg);
+			break;
+		case 'R':
+			pg.is_silo_readonly = true;
 			break;
 #endif /* WITH_SILO */
 #ifdef WITH_NOFLUSH
