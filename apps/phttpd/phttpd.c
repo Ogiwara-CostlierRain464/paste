@@ -722,6 +722,10 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size, struct
 		init_silo(&db->silo, nmg->nthreads, g->silo_tuple_num);
 	}
 	D("Silo Init done");
+	D("Silo mode: %s", g->is_silo_global ? "shared" : "per thread");
+	D("Silo readonly: %s", g->is_silo_readonly ? "true" : "false");
+	D("Silo # of tuples: %d", g->silo_tuple_num);
+
 #endif
 #ifdef WITH_BPLUS
 	/* need B+tree ? */
