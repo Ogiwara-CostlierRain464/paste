@@ -460,8 +460,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 
 		key = 9;
 		struct value v;
-		v.body = "char";
-		v.len = 4;
+		v.body = req;
+		v.len = len;
 
 		if(read_only){
 			tx_read(&t, key);
