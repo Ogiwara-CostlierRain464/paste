@@ -473,9 +473,9 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 		if(r != commited){
 			D("Silo aborted");
 		}
-		return 0;
 #endif
 		if (parse_post(req, len, &coff, &clen, &thisclen)) {
+			fprintf(stderr, "FUCK!!!!!!!!!!!!!!!!!!");
 			return 0;
 		}
 		if (clen > thisclen) {
