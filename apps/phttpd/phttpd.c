@@ -531,6 +531,9 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 					v.len = end2 - end;
 					tx_write(&t, key, v);
 					break;
+				case 'e':
+					goto Commit;
+					break;
 				default:
 					D("Wrong request");
 					return -1;
@@ -541,7 +544,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				}
 				cur++;
 			}
-
+		Commit:
+			;
 			enum result r = tx_commit(&t);
 			if(r != commited){
 				//D("Silo aborted");
