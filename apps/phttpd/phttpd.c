@@ -544,9 +544,9 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 
 			enum result r = tx_commit(&t);
 			if(r != commited){
-				D("Silo aborted");
+				//D("Silo aborted");
 			}else{
-				D("Suc. acc: %d", a);
+				//D("Suc. acc: %d", a);
 			}
 #endif
 		} else if (db->paddr) {
