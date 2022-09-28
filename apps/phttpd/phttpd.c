@@ -56,7 +56,7 @@
 #ifdef WITH_SILO
 #include <silo/tx.h>
 #include <silo/silo.h>
-#include <silo/xoroshiro_128plus.h>
+#include <silo/tuple.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
@@ -135,7 +135,6 @@ struct phttpd_global {
 	} dba;
 #ifdef WITH_SILO
 	bool is_silo_global;
-	bool is_silo_readonly;
 	struct silo silo;
 	int silo_tuple_num;
 #endif
@@ -183,7 +182,7 @@ static int
 parse_post(char *post, const size_t len,
 		size_t *coff, size_t *clen, size_t *thisclen)
 {
-	char *pp, *p = strstr(post + SKIP_POST, (char *)"Content-Length: ");
+	char *pp, *p = strstr(post, (char *)"Content-Length: ");
 	char *end;
 
 	*coff = 0;
@@ -228,7 +227,6 @@ usage(void)
 #ifdef WITH_SILO
 	    "\t[-S] single Silo DB\n"
 	    "\t[-s tuples] number of tuples in Silo DB\n"
-	    "\t[-R] Silo read only\n"
 #endif
 
 	    "\nExamples:\n"
@@ -447,35 +445,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 		}
 		break;
 	case POST:
-#ifdef WITH_SILO
-		;
-		struct xoroshiro_128plus x = init_xoroshiro_128plus(0);
-		int read_only = pg->is_silo_readonly ? 1 : next(&x) % 2;
-		struct tx t;
-		if(!pg->is_silo_global){
-			tx_init(&db->silo, &t);
-		}else{
-			tx_init(&pg->silo, &t);
-		}
-
-		key = 9;
-		struct value v;
-		v.body = req;
-		v.len = len;
-
-		if(read_only){
-			tx_read(&t, key);
-		}else{
-			tx_write(&t, key, v);
-		}
-
-		enum result r = tx_commit(&t);
-		if(r != commited){
-			D("Silo aborted");
-		}
-#endif
 		if (parse_post(req, len, &coff, &clen, &thisclen)) {
-			fprintf(stderr, "FUCK!!!!!!!!!!!!!!!!!!");
+			fprintf(stderr, "NO!!!!!!!!!!!!!!!!!!");
 			return 0;
 		}
 		if (clen > thisclen) {
@@ -525,6 +496,59 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				D("leveldb write error");
 			}
 #endif /* WITH_LEVELDB */
+#ifdef WITH_SILO
+		} else if (true) {
+			// string starts from datap
+			// to clen
+
+			struct tx t;
+			if(!pg->is_silo_global){
+				tx_init(&db->silo, &t);
+			}else{
+				tx_init(&pg->silo, &t);
+			}
+
+			char *cur = datap;
+			char a = 0;
+			char *end, *end2;
+			uint64_t key;
+
+			for(;;){
+
+				switch(cur[0]){
+				case 'r':
+					cur+=2; // r_
+					key = strtol(cur, &end, 10);
+					a += tx_read(&t, key).body[0];
+					break;
+				case 'w':
+					cur+=2; // w_
+					key = strtol(cur, &end, 10);
+					end++; // _
+					strtol(end, &end2, 10);
+					struct value v;
+					v.body = end;
+					v.len = end2 - end;
+					tx_write(&t, key, v);
+					break;
+				default:
+					D("Wrong request");
+					return -1;
+				}
+				cur = strstr(cur, (char*)"\n");
+				if(cur == NULL){
+					break;
+				}
+				cur++;
+			}
+
+			enum result r = tx_commit(&t);
+			if(r != commited){
+				D("Silo aborted");
+			}else{
+				D("Suc. acc: %d", a);
+			}
+#endif
 		} else if (db->paddr) {
 			copy_and_log(db->paddr, &db->cur, dbsiz, datap,
 			    thisclen, db->pgsiz, is_pm(db), db->vp, key);
@@ -723,7 +747,6 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size, struct
 	}
 	D("Silo Init done");
 	D("Silo mode: %s", g->is_silo_global ? "shared" : "per thread");
-	D("Silo readonly: %s", g->is_silo_readonly ? "true" : "false");
 	D("Silo # of tuples: %d", g->silo_tuple_num);
 
 #endif
@@ -863,7 +886,6 @@ main(int argc, char **argv)
 #ifdef WITH_SILO
 	pg.is_silo_global = false;
 	pg.silo_tuple_num = 10000;
-	pg.is_silo_readonly = false;
 #endif
 
 	while ((ch = getopt(argc, argv,
@@ -942,9 +964,6 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			pg.silo_tuple_num = atoi(optarg);
-			break;
-		case 'R':
-			pg.is_silo_readonly = true;
 			break;
 #endif /* WITH_SILO */
 #ifdef WITH_NOFLUSH

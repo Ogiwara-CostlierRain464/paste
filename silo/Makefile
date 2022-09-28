@@ -8,6 +8,12 @@ libsilo.a: $(OBJS)
 	ar rv $@ $?
 	ranlib $@
 
+silo.o: silo.c
+	gcc -g -c -o silo.o silo.c
+
+tx.o: tx.c
+	gcc -g -c -o tx.o tx.c
+
 test: $(TEST)
 	gcc -pthread -o test $^
 
