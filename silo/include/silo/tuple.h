@@ -29,6 +29,8 @@ struct tid_word{
 
 #define CACHE_LINE_SIZE 64
 #define BODY_SIZE 2048
+#define MAX_READ_SIZE 50
+#define MAX_WRITE_SIZE 50
 
 struct tuple{
 	alignas(CACHE_LINE_SIZE) struct tid_word tid_word;

@@ -16,10 +16,10 @@ struct write_operation{
 
 struct tx{
 	struct silo* silo;
-	struct read_operation reads[10];
-	ssize_t num_read;
-	struct write_operation writes[10];
-	ssize_t num_write;
+	struct read_operation reads[MAX_READ_SIZE];
+	ssize_t num_read; // MAX_READ_SIZE
+	struct write_operation writes[MAX_WRITE_SIZE];
+	ssize_t num_write; // MAX_WRITE_SIZE
 
 	struct tid_word
 	    max_read_tid,
