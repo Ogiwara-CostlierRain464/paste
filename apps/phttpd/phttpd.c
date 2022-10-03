@@ -889,7 +889,7 @@ main(int argc, char **argv)
 	pg.msglen = 64;
 #ifdef WITH_SILO
 	pg.is_silo_global = false;
-	pg.silo_tuple_num = 10000;
+	pg.silo_tuple_num = 1000000;
 #endif
 
 	while ((ch = getopt(argc, argv,

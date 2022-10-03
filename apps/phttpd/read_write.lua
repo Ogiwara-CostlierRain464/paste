@@ -1,10 +1,13 @@
 wrk.method = "POST"
 wrk.body = ""
-for i = 1, 20 do
-	wrk.body = wrk.body.."r "..i.."\n"
+math.randomseed(os.time())
+for i = 1, 5 do
+	r = math.random(999999)
+	wrk.body = wrk.body.."r "..r.."\n"
 end
-for i = 1, 20 do
-	wrk.body = wrk.body.."w "..i.." "..i.."\n"
+for i = 1, 5 do
+	r = math.random(999999)
+	wrk.body = wrk.body.."w "..r.." "..r.."\n"
 end
 wrk.body = wrk.body.."end"
 wrk.headers["Content-Type"] = "application/x-www-form-urlencoded"
