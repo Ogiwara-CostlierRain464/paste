@@ -6,6 +6,7 @@
 struct read_operation{
 	key key;
 	struct tid_word tid_word;
+	struct value value; // for re-read
 };
 
 struct write_operation{

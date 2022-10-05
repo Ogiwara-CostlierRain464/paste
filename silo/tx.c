@@ -8,10 +8,42 @@ void tx_init(struct silo* silo, struct tx* t){
 	t->silo = silo;
 }
 
+bool tx_exist_in_read_set(struct tx* tx, key k, struct value *out_v){
+	for(size_t i = 0; i < tx->num_read; i++){
+		if (tx->reads[i].key == k){
+			if(out_v != NULL)
+				*out_v = tx->reads[i].value;
+
+			return true;
+		}
+	}
+	return false;
+}
+
+bool tx_exist_in_write_set(struct tx* tx, key k, struct value *out_v){
+	for(size_t i = 0; i < tx->num_write; i++){
+		if (tx->writes[i].key == k){
+			if(out_v != NULL)
+				*out_v = tx->writes[i].value;
+			return true;
+		}
+	}
+	return false;
+}
+
 struct value tx_read(struct tx* tx,key key){
 	struct silo *s = tx->silo;
 	struct tid_word before, after;
 	struct value data;
+	/**
+	 * Avoid read-own-writes and re-read
+	 */
+	if(tx_exist_in_read_set(tx, key, &data)){
+		return data;
+	}
+	if(tx_exist_in_write_set(tx, key, &data)){
+		return data;
+	}
 
 	struct tuple *t = &s->table[key];
 
@@ -33,14 +65,21 @@ struct value tx_read(struct tx* tx,key key){
 	}
 	tx->reads[tx->num_read] = (struct read_operation){
 	    .key = key,
-	    .tid_word = after
+	    .tid_word = after,
+	    .value = data
 	};
 	tx->num_read++;
 	return data;
 }
 
 void tx_write(struct tx* tx, key key, struct value val){
-	// TODO: support re-write.
+	/**
+	 * Avoid re-write
+	 */
+	if(tx_exist_in_write_set(tx, key, NULL)){
+		return;
+	}
+
 	assert(val.len <= BODY_SIZE);
 	struct silo *s = tx->silo;
 
@@ -54,7 +93,6 @@ void tx_write(struct tx* tx, key key, struct value val){
 }
 
 void tx_lock_write_set(struct tx* tx);
-bool tx_exist_in_write_set(struct tx* tx, struct tuple* t);
 void tx_unlock_write_set(struct tx* tx);
 
 int compare_write(const void* a_, const void* b_){
@@ -85,7 +123,7 @@ enum result tx_commit(struct tx* tx){
 
 		if(now.tid != when_read.tid
 		    || !now.latest
-		    || (now.lock && !tx_exist_in_write_set(tx, t))
+		    || (now.lock && !tx_exist_in_write_set(tx, op->key, NULL))
 		    || now.epoch != when_read.epoch){
 			tx_unlock_write_set(tx);
 			return aborted;
@@ -151,12 +189,4 @@ void tx_unlock_write_set(struct tx* tx){
 		desired.lock = false;
 		atomic_store(&tx->writes[i].ptr->tid_word.body, desired.body);
 	}
-}
-
-bool tx_exist_in_write_set(struct tx* tx, struct tuple* t){
-	for(size_t i = 0; i < tx->num_write; i++){
-		if(tx->writes[i].ptr == t)
-			return true;
-	}
-	return false;
 }
