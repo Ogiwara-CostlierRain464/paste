@@ -32,7 +32,7 @@ enum result{
 };
 
 void tx_init(struct silo*, struct tx*);
-const struct value tx_read(struct tx*, key);
+struct value tx_read(struct tx*, key);
 void tx_write(struct tx*, key, struct value);
 enum result tx_commit(struct tx*);
 

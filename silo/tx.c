@@ -8,7 +8,7 @@ void tx_init(struct silo* silo, struct tx* t){
 	t->silo = silo;
 }
 
-const struct value tx_read(struct tx* tx,key key){
+struct value tx_read(struct tx* tx,key key){
 	struct silo *s = tx->silo;
 	struct tid_word before, after;
 	struct value data;
@@ -40,7 +40,7 @@ const struct value tx_read(struct tx* tx,key key){
 }
 
 void tx_write(struct tx* tx, key key, struct value val){
-	// assert not to re-write.
+	// TODO: support re-write.
 	assert(val.len <= BODY_SIZE);
 	struct silo *s = tx->silo;
 

@@ -5,12 +5,16 @@
 #include <sys/sysinfo.h>
 #include "include/silo/tx.h"
 #include "include/silo/helper/error_functions.h"
+#include "xoroshiro_128plus.h"
 
 atomic_bool wait = true;
 
 struct silo s;
 
 void *worker(void *thread_id){
+	int t_id = (int) thread_id;
+	struct xoroshiro_128plus rand = init_xoroshiro_128plus(t_id);
+
 	while (wait){;}
 	struct value buf;
 	char c_buf;
@@ -18,13 +22,14 @@ void *worker(void *thread_id){
 	buf.len = 1;
 
 	ssize_t num_commited = 0;
-	for(size_t i = 0; i < 20; i++){
+
+	for(size_t i = 0; i < 1000000; i++){
 		struct tx t;
 		tx_init(&s, &t);
-		struct value v = tx_read(&t, 1); // do not edit this value
+		struct value v = tx_read(&t, next(&rand) % 10000); // do not edit this value
 		*buf.body = v.body[0];
 		(*buf.body)++;
-		tx_write(&t, 1, buf);
+		tx_write(&t, next(&rand) % 10000, buf);
 		enum result r = tx_commit(&t);
 		if(r == commited)
 			num_commited++;
@@ -38,6 +43,9 @@ void *worker(void *thread_id){
 int main(){
 	int thread_num = get_nprocs();
 	printf("Thread num: %d", thread_num);
+
+	// thread num
+	// later: read_write count
 
 	init_silo(&s, thread_num, 10000);
 
