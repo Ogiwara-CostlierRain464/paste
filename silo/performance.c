@@ -7,7 +7,7 @@
 #include <time.h>
 #include "include/silo/tx.h"
 #include "include/silo/helper/error_functions.h"
-#include "xoroshiro_128plus.h"
+#include "include/silo/xoroshiro_128plus.h"
 
 double make_ave_double(double arr[], ssize_t len){
 	double tmp = 0;

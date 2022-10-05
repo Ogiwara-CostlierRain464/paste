@@ -5,7 +5,7 @@
 #include <sys/sysinfo.h>
 #include "include/silo/tx.h"
 #include "include/silo/helper/error_functions.h"
-#include "xoroshiro_128plus.h"
+#include "include/silo/xoroshiro_128plus.h"
 
 atomic_bool wait = true;
 
