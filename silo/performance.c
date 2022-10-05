@@ -42,8 +42,9 @@ void *worker(void *_thread_id){
 
 	while (wait){;}
 	ssize_t iter_count = 0;
-	clock_t start = clock();
-	clock_t end;
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
 	for(;;){
 		struct tx t;
 		tx_init(&s, &t);
@@ -66,16 +67,16 @@ void *worker(void *_thread_id){
 
 		tx_commit(&t);
 
-		end = clock();
+		clock_gettime(CLOCK_MONOTONIC, &end);
 
 		iter_count++;
 
-		double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+		double seconds = (double)(end.tv_sec - start.tv_sec);
 		if(seconds > LOOP_SEC){
 			break;
 		}
 	}
-	throughput_per_thread[t_id] = throughput((double)(end - start) / CLOCKS_PER_SEC, iter_count);
+	throughput_per_thread[t_id] = throughput((double)(end.tv_sec - start.tv_sec), iter_count);
 
 	pthread_exit(NULL);
 }
@@ -109,9 +110,7 @@ int main(int argc, char* argv[]){
 		void *ret_val;
 		pthread_join(threads[i], &ret_val);
 		if(ret_val == PTHREAD_CANCELED){
-			printf("Thread %zu has been canceled.\n", i);
-		}else{
-			printf("Thread %zu return code: %ld\n", i, ((intptr_t)ret_val));
+			fprintf(stderr, "Thread %zu has been canceled.\n", i);
 		}
 	}
 
