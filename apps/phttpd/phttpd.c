@@ -446,7 +446,6 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 		break;
 	case POST:
 		if (parse_post(req, len, &coff, &clen, &thisclen)) {
-			fprintf(stderr, "NO!!!!!!!!!!!!!!!!!!");
 			return 0;
 		}
 		if (clen > thisclen) {
