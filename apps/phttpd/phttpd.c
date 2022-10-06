@@ -520,12 +520,12 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 					break;
 				case 'w':
 					cur+=2; // w_
-					cur = read_int(cur, 7, &key);
+					cur = read_int(cur, 1, &key);
 					cur++; // _
 					struct value v;
 					v.body = cur;
-					v.len = 7;
-					cur+=7;
+					v.len = 1;
+					cur+=1;
 					tx_write(&t, key, v);
 					break;
 				case 'e':

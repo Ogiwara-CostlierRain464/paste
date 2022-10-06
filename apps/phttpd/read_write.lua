@@ -7,7 +7,7 @@ for i = 1, 2 do
 end
 for i = 1, 3 do
 	r = math.random(999999)
-	wrk.body = wrk.body.."w "..string.format("%07d", r).." "..string.format("%07d", i).."\n"
+	wrk.body = wrk.body.."w "..string.format("%07d", r).." 1".."\n"
 end
 wrk.body = wrk.body.."end"
 wrk.headers["Content-Type"] = "application/x-www-form-urlencoded"
