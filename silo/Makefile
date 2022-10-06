@@ -3,8 +3,9 @@ SRCS := $(SRCS) include/silo/helper/error_functions.c include/silo/helper/get_nu
 OBJS = ${SRCS:.c=.o}
 TEST := $(SRCS) test.c xoroshiro_128plus.h
 PERFORMANCE := $(SRCS) performance.c xoroshiro_128plus.h
+UNIT := $(SRCS) unit.c
 
-PROG = test
+PROG = test performance unit
 
 all: $(PROG)
 
@@ -24,5 +25,8 @@ test: $(TEST)
 performance: $(PERFORMANCE)
 	gcc -pthread -Wno-pointer-to-int-cast -g -o performance $^
 
+unit: $(UNIT)
+	gcc -g -o unit $^
+
 clean:
-	-rm -f *.o *.a test performance
+	-rm -f *.o *.a test performance unit

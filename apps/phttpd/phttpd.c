@@ -58,6 +58,7 @@
 #include <silo/silo.h>
 #include <silo/tuple.h>
 #include <silo/xoroshiro_128plus.h>
+#include <silo/helper/str.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
@@ -499,9 +500,6 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 #endif /* WITH_LEVELDB */
 #ifdef WITH_SILO
 		} else if (true) {
-			// string starts from datap
-			// to clen
-
 			struct tx t;
 			if(!pg->is_silo_global){
 				tx_init(&db->silo, &t);
@@ -509,23 +507,42 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				tx_init(&pg->silo, &t);
 			}
 
-			struct value v;
-			char a[] = {'0', '\0'};
-			v.body = a;
-			v.len = 2;
-			char acc = 0;
+			char *cur = datap;
+			char a = 0;
+			char *end, *end2;
+			uint64_t key;
 
-			for(size_t i = 1; i <= 2; i++){ // read
-				uint64_t k = next(&db->r) % pg->silo_tuple_num;
-				acc += tx_read(&t, k).body[0];
+			for(;;){
+				switch(cur[0]){
+				case 'r':
+					cur+=2; // r_
+					key = my_str_to_l(cur, &end, 10);
+					a += tx_read(&t, key).body[0];
+					break;
+				case 'w':
+					cur+=2; // w_
+					key = my_str_to_l(cur, &end, 10);
+					end++; // _
+					strtol(end, &end2, 10);
+					struct value v;
+					v.body = end;
+					v.len = end2 - end;
+					tx_write(&t, key, v);
+					break;
+				case 'e':
+					goto Commit;
+					break;
+				default:
+					D("Wrong request");
+					return -1;
+				}
+				cur = my_str_str(cur, (char*)"\n");
+				if(cur == NULL){
+					break;
+				}
+				cur++;
 			}
-
-			for(size_t i = 1; i <= 3; i++){ // write
-				uint64_t k = next(&db->r) % pg->silo_tuple_num;
-				v.body[0] = i;
-				tx_write(&t, k, v);
-			}
-
+		Commit:
 			tx_commit(&t);
 #endif
 		} else if (db->paddr) {

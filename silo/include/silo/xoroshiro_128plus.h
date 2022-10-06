@@ -31,7 +31,7 @@ static inline uint64_t rotl(const uint64_t x, int k) {
 	return (x << k) | (x >> (64 - k));
 }
 
-static uint64_t next(struct xoroshiro_128plus *r) {
+static __attribute__ ((unused)) uint64_t next(struct xoroshiro_128plus *r) {
 	const uint64_t s0 = r->s[0];
 	uint64_t s1 = r->s[1];
 	const uint64_t result = s0 + s1;
