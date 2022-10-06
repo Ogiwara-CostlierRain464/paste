@@ -509,24 +509,23 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 
 			char *cur = datap;
 			char a = 0;
-			char *end, *end2;
 			uint64_t key;
 
 			for(;;){
 				switch(cur[0]){
 				case 'r':
 					cur+=2; // r_
-					key = my_str_to_l(cur, &end, 10);
+					cur = read_int(cur, 7, &key);
 					a += tx_read(&t, key).body[0];
 					break;
 				case 'w':
 					cur+=2; // w_
-					key = my_str_to_l(cur, &end, 10);
-					end++; // _
-					strtol(end, &end2, 10);
+					cur = read_int(cur, 7, &key);
+					cur++; // _
 					struct value v;
-					v.body = end;
-					v.len = end2 - end;
+					v.body = cur;
+					v.len = 7;
+					cur+=7;
 					tx_write(&t, key, v);
 					break;
 				case 'e':
@@ -536,11 +535,7 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 					D("Wrong request");
 					return -1;
 				}
-				cur = my_str_str(cur, (char*)"\n");
-				if(cur == NULL){
-					break;
-				}
-				cur++;
+				cur++; // \n
 			}
 		Commit:
 			tx_commit(&t);
