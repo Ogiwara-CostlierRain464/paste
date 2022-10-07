@@ -512,8 +512,8 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 			uint64_t key;
 
 			struct value v;
-			char a[] = {'0', '\0'};
-			v.body = a;
+			char body[] = {'0', '\0'};
+			v.body = body;
 			v.len = 2;
 
 			for(;;){
