@@ -511,6 +511,11 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 			char a = 0;
 			uint64_t key;
 
+			struct value v;
+			char a[] = {'0', '\0'};
+			v.body = a;
+			v.len = 2;
+
 			for(;;){
 				switch(cur[0]){
 				case 'r':
@@ -522,9 +527,9 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 					cur+=2; // w_
 					cur = read_int(cur, 7, &key);
 					cur++; // _
-					struct value v;
-					v.body = cur;
-					v.len = 1;
+					// struct value v;
+					// v.body = cur;    // avoid copy from
+					// v.len = 1;
 					cur+=1;
 					tx_write(&t, key, v);
 					break;
