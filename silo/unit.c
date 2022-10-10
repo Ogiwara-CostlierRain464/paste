@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "include/silo/helper/str.h"
+#include "include/silo/xoroshiro_128plus.h"
 
 void test_my_str(){
 	char a[] = "abcdefg01234fbg";
@@ -19,8 +21,20 @@ void test_my_str(){
 	assert(b[-1] == '7');
 }
 
+void test_rand(){
+
+
+	struct xoroshiro_128plus r = init_xoroshiro_128plus(0);
+	printf("Rand: %"PRIu64"\n", next(&r));
+	printf("Rand: %"PRIu64"\n", next(&r));
+	printf("Rand: %"PRIu64"\n", next(&r));
+	printf("Rand: %"PRIu64"\n", next(&r));
+
+}
+
 int main(){
 	test_my_str();
+	test_rand();
 	printf("Test done\n");
 	return 0;
 }

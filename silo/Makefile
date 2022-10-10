@@ -1,8 +1,8 @@
 SRCS = silo.c tx.c
 SRCS := $(SRCS) include/silo/helper/error_functions.c include/silo/helper/get_num.c include/silo/helper/read_line.c
 OBJS = ${SRCS:.c=.o}
-TEST := $(SRCS) test.c xoroshiro_128plus.h
-PERFORMANCE := $(SRCS) performance.c xoroshiro_128plus.h
+TEST := $(SRCS) test.c
+PERFORMANCE := $(SRCS) performance.c
 UNIT := $(SRCS) unit.c
 
 PROG = test performance unit
