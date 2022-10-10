@@ -54,7 +54,7 @@ do
 	end
 end
 
-set_seed(os.time())
+set_seed(os.clock()) -- get more precise time to set seed effectively
 
 wrk.method = "POST"
 wrk.body = ""
