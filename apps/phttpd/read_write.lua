@@ -60,7 +60,7 @@ wrk.method = "POST"
 wrk.body = ""
 
 
-for i = 1, 2 do
+for i = 1, 3 do
 	r = get_random_32() % 1000000
 	wrk.body = wrk.body.."r "..string.format("%07d", r).."\n"
 end
