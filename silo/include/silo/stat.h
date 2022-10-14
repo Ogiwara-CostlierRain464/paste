@@ -19,7 +19,7 @@ struct KeyStat{ // per key in a thread
 	size_t waitWUnlockInWriteCount;
 };
 
-struct KeyStat* make_arr_per_conn(size_t tuple_num){
+static struct KeyStat* make_arr_per_conn(size_t tuple_num){
 	return calloc(tuple_num, sizeof(struct KeyStat)); // init with zero
 }
 
