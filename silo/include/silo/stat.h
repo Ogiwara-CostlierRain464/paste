@@ -29,9 +29,9 @@ static void stat_calculate_and_print(
     size_t tuple_num,
     size_t tuple_div_num,
     size_t conn_div_num){
-	for(size_t i = 0; i < conn_num; i+=conn_div_num){
+	size_t conn_unit_len = conn_num / conn_div_num;
+	for(size_t i = 0; i < conn_num; i+=conn_unit_len){
 		size_t counter = 0;
-		size_t conn_unit_len = conn_num / conn_div_num;
 		for(size_t c = i; c < i+conn_unit_len; c++){
 			for(size_t k = 0; k < tuple_num; k++){
 				counter+= arr[c][k].waitWUnlockInReadCount;
@@ -44,7 +44,7 @@ static void stat_calculate_and_print(
 	}
 
 
-	struct KeyStat sum_arr[tuple_num];
+	struct KeyStat *sum_arr = calloc(tuple_num, sizeof(struct KeyStat));
 	for(size_t i = 0; i < conn_num; i++){
 		struct KeyStat *conn_arr = arr[i];
 		for(size_t k = 0; k < tuple_num; k++){

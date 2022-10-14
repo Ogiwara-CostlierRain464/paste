@@ -1080,8 +1080,8 @@ main(int argc, char **argv)
 	    pg.conn_arr,
 	    2000,
 	    pg.silo_tuple_num,
-	    20,
-	    20
+	    10,
+	    10
 	    );
 #endif
 	free_if_exist(nmg.nmr_config);
