@@ -59,14 +59,30 @@ set_seed(os.clock()) -- get more precise time to set seed effectively
 wrk.method = "POST"
 wrk.body = ""
 
+local total_bytes = 0
+
+-- Don't forget to use `ulimit -n` in both server and client!
 
 for i = 1, 3 do
 	r = get_random_32() % 1000000
-	wrk.body = wrk.body.."r "..string.format("%07d", r).."\n"
+	wrk.body = wrk.body.."r "..string.format("%07d", r).."\n" -- 2+7+1=10byte
+	total_bytes = total_bytes+10
 end
 for i = 1, 3 do
 	r = get_random_32() % 1000000
-	wrk.body = wrk.body.."w "..string.format("%07d", r).." 1".."\n"
+	wrk.body = wrk.body.."w "..string.format("%07d", r).." 1".."\n" -- 2+7+2+1=12byte
+	total_bytes = total_bytes+12
 end
+
 wrk.body = wrk.body.."end"
+
+if total_bytes > 1500 then
+	error("Body size cannot be bigger than 1500bytes.")
+end
+
+for i = 1, (1500-total_bytes) do -- add padding
+	wrk.body = wrk.body.."-"
+end
+
+
 wrk.headers["Content-Type"] = "application/x-www-form-urlencoded"

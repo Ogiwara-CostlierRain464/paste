@@ -32,9 +32,11 @@ enum result{
 	commited, aborted
 };
 
+struct KeyStat;
+
 void tx_init(struct silo*, struct tx*);
-struct value tx_read(struct tx*, key);
+struct value tx_read(struct tx*, key, struct KeyStat*);
 void tx_write(struct tx*, key, struct value);
-enum result tx_commit(struct tx*);
+enum result tx_commit(struct tx*, struct KeyStat*);
 
 #endif // PASTE_TX_H

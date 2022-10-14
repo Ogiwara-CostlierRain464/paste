@@ -59,6 +59,7 @@
 #include <silo/tuple.h>
 #include <silo/xoroshiro_128plus.h>
 #include <silo/helper/str.h>
+#include <silo/stat.h>
 #endif /* WITH_SILO */
 
 //#define MYHZ	2400000000
@@ -140,6 +141,7 @@ struct phttpd_global {
 	bool is_silo_global;
 	struct silo silo;
 	int silo_tuple_num;
+	struct KeyStat* conn_arr[2000];
 #endif
 };
 
@@ -516,7 +518,7 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				case 'r':
 					cur+=2; // r_
 					cur = read_int(cur, 7, &key);
-					a += tx_read(&t, key).body[0];
+					a += tx_read(&t, key, pg->conn_arr[m->fd]).body[0];
 					break;
 				case 'w':
 					cur+=2; // w_
@@ -538,7 +540,7 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				cur++; // \n
 			}
 		Commit:
-			tx_commit(&t);
+			tx_commit(&t, pg->conn_arr[m->fd]);
 #endif
 		} else if (db->paddr) {
 			copy_and_log(db->paddr, &db->cur, dbsiz, datap,
@@ -975,6 +977,9 @@ main(int argc, char **argv)
 	if(pg.is_silo_global){
 		init_silo(&pg.silo, nmg.nthreads, pg.silo_tuple_num);
 	}
+	for(size_t i = 0; i < 2000; i++){
+		pg.conn_arr[i] = make_arr_per_conn(pg.silo_tuple_num);
+	}
 #endif
 
 	clean_dir(pg.dba.dir);
@@ -1070,6 +1075,15 @@ main(int argc, char **argv)
 	netmap_eventloop(PST_NAME, pg.ifname, (void **)&g, &error,
 			&pg.sd, 1, NULL, 0, &nmg, &pg);
 
+#ifdef WITH_SILO
+	stat_calculate_and_print(
+	    pg.conn_arr,
+	    2000,
+	    pg.silo_tuple_num,
+	    20,
+	    20
+	    );
+#endif
 	free_if_exist(nmg.nmr_config);
 
 close_socket:

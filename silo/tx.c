@@ -1,5 +1,6 @@
 #include "include/silo/tx.h"
 #include "include/silo/helper/tlpi_hdr.h"
+#include "include/silo/stat.h"
 #include <stdatomic.h>
 #include <assert.h>
 
@@ -31,7 +32,7 @@ bool tx_exist_in_write_set(struct tx* tx, key k, struct value *out_v){
 	return false;
 }
 
-struct value tx_read(struct tx* tx,key key){
+struct value tx_read(struct tx* tx,key key, struct KeyStat* key_arr){
 	struct silo *s = tx->silo;
 	struct tid_word before, after;
 	struct value data;
@@ -60,6 +61,9 @@ struct value tx_read(struct tx* tx,key key){
 		if(before.body ==  after.body){
 			break;
 		}else{
+			// in read, thread i access to key k and failed getting lock
+			// r-w contention
+			key_arr[key].waitWUnlockInReadCount++;
 			continue;
 		}
 	}
@@ -92,7 +96,7 @@ void tx_write(struct tx* tx, key key, struct value val){
 	tx->num_write++;
 }
 
-void tx_lock_write_set(struct tx* tx);
+void tx_lock_write_set(struct tx* tx, struct KeyStat*);
 void tx_unlock_write_set(struct tx* tx);
 
 int compare_write(const void* a_, const void* b_){
@@ -104,10 +108,10 @@ int compare_write(const void* a_, const void* b_){
 	else return 1;
 }
 
-enum result tx_commit(struct tx* tx){
+enum result tx_commit(struct tx* tx, struct KeyStat* key_arr){
 	struct silo *s = tx->silo;
 	qsort(tx->writes, tx->num_write, sizeof(struct write_operation), compare_write);
-	tx_lock_write_set(tx);
+	tx_lock_write_set(tx, key_arr);
 
 	atomic_thread_fence(memory_order_acquire);
 	_Atomic epoch_t e = atomic_load(&s->epoch);
@@ -126,6 +130,10 @@ enum result tx_commit(struct tx* tx){
 		    || (now.lock && !tx_exist_in_write_set(tx, op->key, NULL))
 		    || now.epoch != when_read.epoch){
 			tx_unlock_write_set(tx);
+			// in commit, thread i try to read key k and failed because of
+			// ahead write
+			// r-w contention
+			key_arr[op->key].readLockFailCount++;
 			return aborted;
 		}
 
@@ -156,7 +164,7 @@ enum result tx_commit(struct tx* tx){
 	return commited;
 }
 
-void tx_lock_write_set(struct tx* tx){
+void tx_lock_write_set(struct tx* tx, struct KeyStat* key_arr){
 	// assume write set has sorted.
 	struct silo *s = tx->silo;
 	struct tid_word expected, desired;
@@ -173,6 +181,10 @@ void tx_lock_write_set(struct tx* tx){
 				if(atomic_compare_exchange_weak(&s->table[k].tid_word.body, &expected.body, desired.body)){
 					break;
 				}
+				// in write, thread i try to w-lock key k and fail because of
+				// concurrent w-lock
+				// w-w contention
+				key_arr[k].waitWUnlockInWriteCount++;
 			}
 		}
 
