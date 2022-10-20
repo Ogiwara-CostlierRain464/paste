@@ -142,6 +142,7 @@ struct phttpd_global {
 	struct silo silo;
 	int silo_tuple_num;
 	struct KeyStat* conn_arr[2000];
+	bool key_generate_at_here;
 #endif
 };
 
@@ -232,6 +233,7 @@ usage(void)
 #ifdef WITH_SILO
 	    "\t[-S] single Silo DB\n"
 	    "\t[-s tuples] number of tuples in Silo DB\n"
+	    "\t[-k] Generate key at phttpd\n"
 #endif
 
 	    "\nExamples:\n"
@@ -517,12 +519,22 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				switch(cur[0]){
 				case 'r':
 					cur+=2; // r_
-					cur = read_int(cur, 7, &key);
+					if(pg->key_generate_at_here){
+						key = next(&db->r);
+						cur+=7;
+					}else{
+						cur = read_int(cur, 7, &key);
+					}
 					a += tx_read(&t, key, pg->conn_arr[m->fd]).body[0];
 					break;
 				case 'w':
 					cur+=2; // w_
-					cur = read_int(cur, 7, &key);
+					if(pg->key_generate_at_here){
+						key = next(&db->r);
+						cur+=7;
+					}else{
+						cur = read_int(cur, 7, &key);
+					}
 					cur++; // _
 					struct value v;
 					v.body = cur;    // avoid copy from
@@ -742,7 +754,7 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size, struct
 	D("Silo Init done");
 	D("Silo mode: %s", g->is_silo_global ? "shared" : "per thread");
 	D("Silo # of tuples: %d", g->silo_tuple_num);
-
+	D("Silo key generate at: %s", g->key_generate_at_here ? "here" : "client");
 #endif
 #ifdef WITH_BPLUS
 	/* need B+tree ? */
@@ -880,6 +892,7 @@ main(int argc, char **argv)
 #ifdef WITH_SILO
 	pg.is_silo_global = false;
 	pg.silo_tuple_num = 1000000;
+	pg.key_generate_at_here = false;
 #endif
 
 	while ((ch = getopt(argc, argv,
@@ -958,6 +971,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			pg.silo_tuple_num = atoi(optarg);
+			break;
+		case 'k':
+			pg.key_generate_at_here = true;
 			break;
 #endif /* WITH_SILO */
 #ifdef WITH_NOFLUSH

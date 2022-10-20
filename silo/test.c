@@ -26,11 +26,11 @@ void *worker(void *thread_id){
 	for(size_t i = 0; i < 1000000; i++){
 		struct tx t;
 		tx_init(&s, &t);
-		struct value v = tx_read(&t, next(&rand) % 10000); // do not edit this value
+		struct value v = tx_read(&t, next(&rand) % 10000, NULL); // do not edit this value
 		*buf.body = v.body[0];
 		(*buf.body)++;
 		tx_write(&t, next(&rand) % 10000, buf);
-		enum result r = tx_commit(&t);
+		enum result r = tx_commit(&t, NULL);
 		if(r == commited)
 			num_commited++;
 	}

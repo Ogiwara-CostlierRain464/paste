@@ -56,7 +56,7 @@ void *worker(void *_thread_id){
 
 		for(size_t i = 1; i <= 2; i++){ // read
 			key k = next(&r) % TUPLE_NUM;
-			acc += tx_read(&t, k).body[0];
+			acc += tx_read(&t, k, NULL).body[0];
 		}
 
 		for(size_t i = 1; i <= 3; i++){ // write
@@ -65,7 +65,7 @@ void *worker(void *_thread_id){
 			tx_write(&t, k, v);
 		}
 
-		tx_commit(&t);
+		tx_commit(&t, NULL);
 
 		clock_gettime(CLOCK_MONOTONIC, &end);
 
