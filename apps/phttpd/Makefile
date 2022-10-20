@@ -1,5 +1,5 @@
 #CFLAGS += -Werror -Wall -O2 -g -fsanitize=address
-CFLAGS += -Werror -Wall -O0 -g
+CFLAGS += -Werror -Wall -O2 -g
 NMLIB = ../../libnetmap/libnetmap.a
 LSMLIB = ../../../lsm_nvm
 SILOLIB = ../../silo

@@ -54,7 +54,13 @@ do
 	end
 end
 
+
+
 set_seed(os.clock()) -- get more precise time to set seed effectively
+
+local tuple_num = 1000000
+local read_num = 3
+local write_num = 3
 
 wrk.method = "POST"
 wrk.body = ""
@@ -63,13 +69,13 @@ local total_bytes = 0
 
 -- Don't forget to use `ulimit -n` in both server and client!
 
-for i = 1, 3 do
-	r = get_random_32() % 1000000
+for i = 1, read_num do
+	r = get_random_32() % tuple_num
 	wrk.body = wrk.body.."r "..string.format("%07d", r).."\n" -- 2+7+1=10byte
 	total_bytes = total_bytes+10
 end
-for i = 1, 3 do
-	r = get_random_32() % 1000000
+for i = 1, write_num do
+	r = get_random_32() % tuple_num
 	wrk.body = wrk.body.."w "..string.format("%07d", r).." 1".."\n" -- 2+7+2+1=12byte
 	total_bytes = total_bytes+12
 end
