@@ -520,7 +520,7 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				case 'r':
 					cur+=2; // r_
 					if(pg->key_generate_at_here){
-						key = next(&db->r);
+						key = next(&db->r) % pg->silo_tuple_num;
 						cur+=7;
 					}else{
 						cur = read_int(cur, 7, &key);
@@ -530,7 +530,7 @@ phttpd_req(char *req, int len, struct nm_msg *m, int *no_ok,
 				case 'w':
 					cur+=2; // w_
 					if(pg->key_generate_at_here){
-						key = next(&db->r);
+						key = next(&db->r) % pg->silo_tuple_num;
 						cur+=7;
 					}else{
 						cur = read_int(cur, 7, &key);
