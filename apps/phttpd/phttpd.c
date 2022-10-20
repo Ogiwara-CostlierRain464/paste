@@ -141,7 +141,7 @@ struct phttpd_global {
 	bool is_silo_global;
 	struct silo silo;
 	int silo_tuple_num;
-	struct KeyStat* conn_arr[2000];
+	alignas(64) struct KeyStat* conn_arr[2000];
 	bool key_generate_at_here;
 #endif
 };
