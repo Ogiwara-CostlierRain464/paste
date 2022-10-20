@@ -896,7 +896,7 @@ main(int argc, char **argv)
 #endif
 
 	while ((ch = getopt(argc, argv,
-			    "P:l:b:md:Di:cC:a:p:xL:BFe:hNSs:R")) != -1) {
+			    "P:l:b:md:Di:cC:a:p:xL:BFe:hNSs:Rk")) != -1) {
 		switch (ch) {
 		default:
 			D("bad option %c %s", ch, optarg);
