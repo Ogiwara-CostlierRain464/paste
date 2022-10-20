@@ -750,7 +750,7 @@ init_db(struct dbctx *db, int i, const char *dir, int flags, size_t size, struct
 	if(!g->is_silo_global){
 		init_silo(&db->silo, nmg->nthreads, g->silo_tuple_num);
 	}
-	db->r = init_xoroshiro_128plus(time(NULL));
+	db->r = init_xoroshiro_128plus(i);
 	D("Silo Init done");
 	D("Silo mode: %s", g->is_silo_global ? "shared" : "per thread");
 	D("Silo # of tuples: %d", g->silo_tuple_num);
